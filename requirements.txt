@@ -1,0 +1,16 @@
+# API
+fastapi==0.115.6
+uvicorn[standard]==0.32.1
+python-multipart==0.0.17
+pydantic-settings==2.6.1
+
+# DB
+sqlalchemy==2.0.36
+psycopg2-binary==2.9.10
+
+# Face — TensorFlow 2.16+ split Keras into `keras` + `tf-keras`; DeepFace still expects `tf-keras`.
+numpy>=1.26,<2
+Pillow>=10.4.0
+tensorflow==2.21.0
+tf-keras==2.21.0
+deepface==0.0.93

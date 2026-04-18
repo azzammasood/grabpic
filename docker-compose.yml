@@ -1,0 +1,42 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: grabpic
+      POSTGRES_PASSWORD: grabpic
+      POSTGRES_DB: grabpic
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U grabpic -d grabpic"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: postgresql://grabpic:grabpic@db:5432/grabpic
+      STORAGE_PATH: /data/storage
+    volumes:
+      - ./storage:/data/storage
+    healthcheck:
+      test:
+        - CMD
+        - python
+        - -c
+        - import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=5).read()
+      interval: 10s
+      timeout: 8s
+      retries: 6
+      start_period: 45s
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
