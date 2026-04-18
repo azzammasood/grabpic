@@ -8,47 +8,11 @@ Interactive API docs (Swagger UI): `http://localhost:8000/docs` (OpenAPI: `/open
 
 ## Architecture (high level)
 
-**Static diagram** (white background — renders on GitHub, IDEs, and PDFs):
+![Grabpic system architecture](docs/architecture.jpg)
 
-![Grabpic system architecture](docs/architecture.svg)
+### End-to-end flow
 
-**Same architecture as Mermaid** (renders as a diagram on [github.com](https://github.com/azzammasood/grabpic); in some offline Markdown previews it may appear as a code block — use the SVG above, or open the file on GitHub):
-
-```mermaid
-%%{init: {'theme':'base', 'themeVariables': {'primaryColor':'#ffffff','primaryTextColor':'#0f172a','primaryBorderColor':'#1e293b','lineColor':'#475569','secondaryColor':'#f1f5f9','tertiaryColor':'#ffffff','background':'#ffffff','mainBkg':'#ffffff','secondBkg':'#f8fafc'}}}%%
-flowchart TB
-  subgraph clients[Clients]
-    C[Swagger / curl / Postman]
-  end
-  subgraph vol[Storage volume]
-    S[RAW images]
-  end
-  subgraph api[FastAPI + Uvicorn]
-    I[Ingest crawl + upload]
-    A[Selfie auth]
-    G[Gallery endpoints]
-  end
-  subgraph ml[DeepFace lazy-loaded]
-    F[Facenet512 + cosine match]
-  end
-  subgraph db[PostgreSQL]
-    GS[(grab_subjects)]
-    SI[(stored_images)]
-    MAP[(image_grab_map)]
-  end
-  C --> I
-  C --> A
-  C --> G
-  S --> I
-  I --> F
-  A --> F
-  F --> GS
-  I --> SI
-  SI --> MAP
-  GS --> MAP
-  G --> SI
-  G --> MAP
-```
+![Grabpic flowchart](docs/flowchart.jpg)
 
 ### Relational schema
 
@@ -213,6 +177,29 @@ Most errors return JSON like:
 ```
 
 Validation errors use FastAPI’s default `422` structure.
+
+## Deploying on Railway
+
+1. Create a **service** from this GitHub repo (Dockerfile build) and add a **PostgreSQL** plugin in the same project.
+2. **Critical:** set **`DATABASE_URL` on the API service** to your **Railway Postgres** connection string — **not** `postgresql://...@localhost:5432/...` (that value is only for local Docker Compose).
+
+   In the Railway dashboard: open your **Grabpic/API service** → **Variables** → edit **`DATABASE_URL`**:
+
+   - Prefer **Add variable** → **Reference** (or “Variable reference”) → choose your **Postgres** service → **`DATABASE_URL`**. Railway will inject the correct URL (usually the internal hostname `postgres.railway.internal` for traffic between services).
+   - Alternatively paste the **internal** Postgres URL from the Postgres service’s **Connect** tab (service-to-service).
+
+3. Keep the other app variables as needed:
+
+   | Variable | Suggested value on Railway |
+   |----------|-----------------------------|
+   | `STORAGE_PATH` | `/data/storage` (ephemeral disk; ok for demos — data resets if the instance is replaced) |
+   | `FACE_MODEL` | `Facenet512` |
+   | `DETECTOR_BACKEND` | `retinaface` |
+   | `MATCH_THRESHOLD` | `0.42` (tune if matches are too strict/loose) |
+
+4. After changing env vars, **redeploy** the API service. Smoke test: `GET /health`, then `GET /docs`.
+
+**Security:** if database credentials were ever pasted into a chat or ticket, **rotate the Postgres password** in Railway and update `DATABASE_URL` accordingly.
 
 ## Tech stack
 
