@@ -1,5 +1,7 @@
 # Grabpic
 
+**Repository:** [github.com/azzammasood/grabpic](https://github.com/azzammasood/grabpic)
+
 **Intelligent Identity & Retrieval Engine** — a FastAPI backend that ingests event photos from a storage folder, detects multiple faces per image, assigns a stable internal **`grab_id`** per unique identity (via DeepFace embeddings + cosine similarity), persists **image ↔ many grab_ids** in **PostgreSQL**, and exposes **selfie-as-key** authentication so a returned `grab_id` authorizes gallery retrieval.
 
 Interactive API docs (Swagger UI): `http://localhost:8000/docs` (OpenAPI: `/openapi.json`).
